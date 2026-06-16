@@ -1,0 +1,240 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Edit3, Eye, Plus, Search, Trash2 } from "lucide-react";
+import AppShell from "@/components/AppShell";
+import MemberForm from "@/components/MemberForm";
+import Modal from "@/components/Modal";
+import Toast from "@/components/Toast";
+import { api } from "@/lib/api";
+import { formatDate, memberStatus } from "@/lib/format";
+
+export default function MembersPage() {
+  const [members, setMembers] = useState([]);
+  const [plans, setPlans] = useState([]);
+  const [meta, setMeta] = useState({ page: 1, limit: 10, totalPages: 1 });
+  const [filters, setFilters] = useState({ search: "", status: "", plan: "", page: 1 });
+  const [modal, setModal] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState({ type: "success", message: "" });
+
+  const selectedMember = useMemo(
+    () => members.find((member) => member.id === modal?.memberId),
+    [members, modal]
+  );
+
+  async function loadMembers(nextFilters = filters) {
+    try {
+      const result = await api.getMembers({ ...nextFilters, limit: 10 });
+      setMembers(result.data);
+      setMeta(result.meta);
+    } catch (error) {
+      setNotice({ type: "error", message: error.message });
+    }
+  }
+
+  async function loadPlans() {
+    try {
+      const result = await api.getPlans();
+      setPlans(result);
+    } catch (error) {
+      setNotice({ type: "error", message: error.message });
+    }
+  }
+
+  useEffect(() => {
+    loadPlans();
+  }, []);
+
+  useEffect(() => {
+    loadMembers(filters);
+  }, [filters]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") === "true") {
+      setModal({ type: "add" });
+    }
+  }, []);
+
+  function updateFilter(key, value) {
+    setFilters((current) => ({ ...current, [key]: value, page: key === "page" ? value : 1 }));
+  }
+
+  async function saveMember(payload) {
+    setLoading(true);
+    try {
+      if (modal?.type === "edit") {
+        await api.updateMember(modal.memberId, payload);
+        setNotice({ type: "success", message: "Member updated successfully" });
+      } else {
+        await api.createMember(payload);
+        setNotice({ type: "success", message: "Member added successfully" });
+      }
+      setModal(null);
+      await loadMembers();
+    } catch (error) {
+      setNotice({ type: "error", message: error.message });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteMember(id) {
+    if (!window.confirm("Delete this member?")) return;
+    try {
+      await api.deleteMember(id);
+      setNotice({ type: "success", message: "Member deleted successfully" });
+      await loadMembers();
+    } catch (error) {
+      setNotice({ type: "error", message: error.message });
+    }
+  }
+
+  return (
+    <AppShell>
+      <Toast type={notice.type} message={notice.message} />
+
+      <header className="page-header">
+        <div>
+          <span className="eyebrow">Member Management</span>
+          <h2>Members</h2>
+        </div>
+        <button className="primary-button compact" onClick={() => setModal({ type: "add" })}>
+          <Plus size={18} />
+          Add Member
+        </button>
+      </header>
+
+      <section className="glass-panel table-toolbar">
+        <label className="search-box">
+          <Search size={18} />
+          <input
+            placeholder="Search members"
+            value={filters.search}
+            onChange={(event) => updateFilter("search", event.target.value)}
+          />
+        </label>
+        <select value={filters.status} onChange={(event) => updateFilter("status", event.target.value)}>
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="expired">Expired</option>
+        </select>
+        <select value={filters.plan} onChange={(event) => updateFilter("plan", event.target.value)}>
+          <option value="">All Plans</option>
+          {plans.map((plan) => (
+            <option key={plan.id} value={plan.plan_name}>
+              {plan.plan_name}
+            </option>
+          ))}
+        </select>
+      </section>
+
+      <section className="glass-panel table-card">
+        <div className="responsive-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Plan</th>
+                <th>Expiry</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((member) => {
+                const status = memberStatus(member.expiry_date);
+                return (
+                  <tr key={member.id}>
+                    <td>
+                      <strong>{member.full_name}</strong>
+                      <span>{member.gender}, {member.age}</span>
+                    </td>
+                    <td>
+                      <strong>{member.phone}</strong>
+                      <span>{member.email}</span>
+                    </td>
+                    <td>{member.membership_plan}</td>
+                    <td>{formatDate(member.expiry_date)}</td>
+                    <td>
+                      <span className={`badge ${status.toLowerCase()}`}>{status}</span>
+                    </td>
+                    <td>
+                      <span className={`badge payment-${member.payment_status.toLowerCase()}`}>{member.payment_status}</span>
+                    </td>
+                    <td>
+                      <div className="table-actions">
+                        <button className="icon-button" onClick={() => setModal({ type: "view", memberId: member.id })} aria-label="View">
+                          <Eye size={16} />
+                        </button>
+                        <button className="icon-button" onClick={() => setModal({ type: "edit", memberId: member.id })} aria-label="Edit">
+                          <Edit3 size={16} />
+                        </button>
+                        <button className="icon-button danger" onClick={() => deleteMember(member.id)} aria-label="Delete">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {members.length === 0 ? <p className="empty-state">No members found.</p> : null}
+
+        <div className="pagination">
+          <button disabled={meta.page <= 1} onClick={() => updateFilter("page", meta.page - 1)}>
+            Previous
+          </button>
+          <span>
+            Page {meta.page} of {meta.totalPages || 1}
+          </span>
+          <button disabled={meta.page >= meta.totalPages} onClick={() => updateFilter("page", meta.page + 1)}>
+            Next
+          </button>
+        </div>
+      </section>
+
+      {modal?.type === "add" ? (
+        <Modal title="Add Member" onClose={() => setModal(null)}>
+          <MemberForm plans={plans} onSubmit={saveMember} loading={loading} />
+        </Modal>
+      ) : null}
+
+      {modal?.type === "edit" && selectedMember ? (
+        <Modal title="Edit Member" onClose={() => setModal(null)}>
+          <MemberForm initialValue={selectedMember} plans={plans} onSubmit={saveMember} loading={loading} />
+        </Modal>
+      ) : null}
+
+      {modal?.type === "view" && selectedMember ? (
+        <Modal title="Member Profile" onClose={() => setModal(null)}>
+          <div className="profile-grid">
+            {Object.entries({
+              Name: selectedMember.full_name,
+              Email: selectedMember.email,
+              Phone: selectedMember.phone,
+              Gender: selectedMember.gender,
+              Age: selectedMember.age,
+              Address: selectedMember.address,
+              Plan: selectedMember.membership_plan,
+              "Start Date": formatDate(selectedMember.start_date),
+              "Expiry Date": formatDate(selectedMember.expiry_date),
+              Payment: selectedMember.payment_status
+            }).map(([label, value]) => (
+              <div key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </div>
+            ))}
+          </div>
+        </Modal>
+      ) : null}
+    </AppShell>
+  );
+}
