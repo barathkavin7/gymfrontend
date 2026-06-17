@@ -51,8 +51,7 @@ a {
 }
 
 .app-shell {
-  display: grid;
-  grid-template-columns: 280px 1fr;
+  display: flex;
   min-height: 100vh;
   gap: 24px;
   padding: 24px;
@@ -66,11 +65,15 @@ a {
 }
 
 .sidebar {
+  width: 280px;
+  min-width: 280px;
   position: sticky;
   top: 24px;
   height: calc(100vh - 48px);
+
   display: flex;
   flex-direction: column;
+
   border-radius: 22px;
   padding: 22px;
 }
@@ -157,10 +160,12 @@ a {
 }
 
 .content-area {
-  display: grid;
-  align-content: start;
-  gap: 22px;
+  flex: 1;
   min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .hero-banner {
@@ -180,7 +185,6 @@ a {
 
 .hero-banner::after {
   content: "";
-  position: absolute;
   inset: auto -20% -46% 28%;
   height: 170px;
   transform: rotate(-6deg);
@@ -404,8 +408,7 @@ td span {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.recent-item div,
-td {
+.recent-item div {
   display: grid;
   gap: 4px;
 }
@@ -860,4 +863,110 @@ tbody tr:hover {
     top: 12px;
     right: 12px;
   }
+}
+
+@media (max-width: 1024px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .sidebar {
+    position: fixed;
+    left: -320px;
+    top: 0;
+    width: 280px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+}
+
+/* ===== MEMBERS TABLE DESKTOP FIX ===== */
+
+.table-card {
+  overflow: hidden;
+}
+
+.responsive-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-card table {
+  width: 100%;
+  min-width: 1200px;
+  table-layout: fixed;
+}
+
+/* Column widths */
+
+.table-card th:nth-child(1),
+.table-card td:nth-child(1) {
+  width: 240px;
+}
+
+.table-card th:nth-child(2),
+.table-card td:nth-child(2) {
+  width: 220px;
+}
+
+.table-card th:nth-child(3),
+.table-card td:nth-child(3) {
+  width: 180px;
+}
+
+.table-card th:nth-child(4),
+.table-card td:nth-child(4) {
+  width: 160px;
+}
+
+.table-card th:nth-child(5),
+.table-card td:nth-child(5) {
+  width: 140px;
+}
+
+.table-card th:nth-child(6),
+.table-card td:nth-child(6) {
+  width: 140px;
+}
+
+.table-card th:nth-child(7),
+.table-card td:nth-child(7) {
+  width: 180px;
+}
+
+.table-card th,
+.table-card td {
+  vertical-align: middle;
+  padding: 18px 14px;
+}
+
+.table-card td strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.table-card td span {
+  display: block;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.table-card th,
+.table-card td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
