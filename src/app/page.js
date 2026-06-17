@@ -73,8 +73,8 @@ export default function DashboardPage() {
       <section className="hero-banner">
         <div>
           <span className="eyebrow">GymPro Command Center</span>
-          <h2>Welcome Back Gym Admin</h2>
-          <p>Track members, plans, revenue, and renewals from a premium management dashboard.</p>
+          <h2>Welcome to the Gym Community</h2>
+          <p>Track members, plans, and renewals from a premium management dashboard.</p>
         </div>
         <div className="hero-orbit">
           <TrendingUp size={52} />
