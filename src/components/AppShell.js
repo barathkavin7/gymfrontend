@@ -2,8 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Dumbbell, LayoutDashboard, Menu, Users, X } from "lucide-react";
+import {
+  Activity,
+  Dumbbell,
+  LayoutDashboard,
+  Menu,
+  Users,
+  X
+} from "lucide-react";
 import { useState } from "react";
+import { isAdmin, logout } from "@/lib/auth";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -17,7 +25,11 @@ export default function AppShell({ children }) {
 
   return (
     <div className="app-shell">
-      <button className="mobile-menu glass-button" onClick={() => setOpen(true)} aria-label="Open menu">
+      <button
+        className="mobile-menu glass-button"
+        onClick={() => setOpen(true)}
+        aria-label="Open menu"
+      >
         <Menu size={20} />
       </button>
 
@@ -26,11 +38,17 @@ export default function AppShell({ children }) {
           <div className="brand-mark">
             <Activity size={24} />
           </div>
+
           <div>
             <h1>GymPro</h1>
             <p>Smart Gym System</p>
           </div>
-          <button className="close-menu" onClick={() => setOpen(false)} aria-label="Close menu">
+
+          <button
+            className="close-menu"
+            onClick={() => setOpen(false)}
+            aria-label="Close menu"
+          >
             <X size={18} />
           </button>
         </div>
@@ -55,8 +73,39 @@ export default function AppShell({ children }) {
         </nav>
 
         <div className="sidebar-card">
-          <span>Premium Admin</span>
-          <strong>Control every membership from one beautiful workspace.</strong>
+          {isAdmin() ? (
+            <>
+              <span>Admin Mode</span>
+
+              <strong>
+                You are logged in as administrator.
+              </strong>
+
+              <button
+                className="primary-button"
+                style={{ marginTop: "12px" }}
+                onClick={logout}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <span>Visitor Mode</span>
+
+              <strong>
+                View members and plans. Login for management access.
+              </strong>
+
+              <button
+                className="primary-button"
+                style={{ marginTop: "12px" }}
+                onClick={() => (window.location.href = "/login")}
+              >
+                Admin Login
+              </button>
+            </>
+          )}
         </div>
       </aside>
 
